@@ -16,7 +16,7 @@ A photo gallery application built with Spring Boot and Oracle Database, featurin
 
 ## Technology Stack
 
-- **Framework**: Spring Boot 2.7.18 (Java 8)
+- **Framework**: Spring Boot 4.0.9 (Java 25)
 - **Database**: Oracle Database 21c Express Edition
 - **Templating**: Thymeleaf
 - **Build Tool**: Maven
@@ -73,8 +73,8 @@ A photo gallery application built with Spring Boot and Oracle Database, featurin
 
 ## Photo Album Java Application
 - **Port**: `8080` (mapped to host port 8080)
-- **Framework**: Spring Boot 2.7.18
-- **Java Version**: 8
+- **Framework**: Spring Boot 4.0.9
+- **Java Version**: 25
 - **Database**: Connects to Oracle container
 - **Photo Storage**: All photos stored as BLOBs in database (no file system storage)
 - **UUID System**: Each photo gets a globally unique identifier for cache-busting
@@ -127,7 +127,8 @@ The application creates the following table structure in Oracle:
 ### Running Locally (without Docker)
 
 1. **Install Oracle Database** (or use Oracle XE)
-2. **Create database user** (choose your own strong password; grant least
+2. **Install Java 25 and Maven 3.9 or newer**
+3. **Create database user** (choose your own strong password; grant least
    privilege only — do NOT grant DBA):
    ```sql
    CREATE USER photoalbum IDENTIFIED BY "<your-strong-password>";
@@ -136,14 +137,14 @@ The application creates the following table structure in Oracle:
          TO photoalbum;
    ALTER USER photoalbum QUOTA UNLIMITED ON USERS;
    ```
-3. **Provide credentials via environment variables** (do not hard-code them
+4. **Provide credentials via environment variables** (do not hard-code them
    in `application.properties`):
    ```bash
    export SPRING_DATASOURCE_URL="jdbc:oracle:thin:@localhost:1521:XE"
    export SPRING_DATASOURCE_USERNAME="photoalbum"
    export SPRING_DATASOURCE_PASSWORD="<your-strong-password>"
    ```
-4. **Run the application**:
+5. **Run the application**:
    ```bash
    mvn spring-boot:run
    ```
