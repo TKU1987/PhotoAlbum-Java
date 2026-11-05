@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for the Photo Album Java cloud modernization plan.",
+  "tasks": [
+    {
+      "type": "infrastructure",
+      "id": "001-infrastructure-azure-container-apps-postgresql",
+      "description": "Provision the Azure resources required to run Photo Album in the specified existing resource group.",
+      "reason": "The current Azure setup script targets AKS, creates a new resource group, and uses a different region instead of the requested Container Apps environment.",
+      "requirements": "Generate Bicep and provision Azure Container Registry, Azure Container Apps environment, application hosting resources, Log Analytics, and Azure Database for PostgreSQL Flexible Server. Use subscription 381bd33f-79a1-4349-86e3-0eecd04338b1, existing resource group rg-labuser-0006, and location swedencentral. Do not create a resource group or AKS cluster. Restrict PostgreSQL network access to the application and use secure credential handling.",
+      "environmentConfiguration": [
+        "subscriptionId=381bd33f-79a1-4349-86e3-0eecd04338b1",
+        "resourceGroup=rg-labuser-0006",
+        "location=swedencentral"
+      ],
+      "dependencies": [],
+      "iacType": "bicep",
+      "provision": true,
+      "skills": [
+        {
+          "name": "infrastructure-bicep-generation",
+          "location": "builtin"
+        }
+      ]
+    },
+    {
+      "type": "transform",
+      "id": "002-transform-oracle-to-postgresql",
+      "description": "Migrate the Photo Album application's Oracle database dependency to Azure Database for PostgreSQL.",
+      "reason": "Oracle is declared in the application's JDBC dependency and datasource configuration, while the target Azure platform requires PostgreSQL.",
+      "requirements": "Migrate the database integration from Oracle to Azure Database for PostgreSQL, including dependencies, connection configuration, database-specific mappings and SQL, and the Docker/development configuration affected by the change. Preserve photo and metadata behavior, including binary photo storage. Do not change the Java or Spring Boot runtime because the application is already upgraded. Target the PostgreSQL Flexible Server provisioned in rg-labuser-0006, swedencentral.",
+      "dependencies": [],
+      "skills": [
+        {
+          "name": "migration-oracle-to-postgresql",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "security",
+      "id": "003-security-cve-remediation",
+      "description": "Scan and remediate known vulnerabilities in the application's dependencies before deployment.",
+      "reason": "Dependency vulnerabilities should be addressed before publishing and running the application in Azure.",
+      "requirements": "Scan all project dependencies for known CVEs and remediate identified vulnerabilities using the minimum patched versions. If a fix requires a major-version upgrade, document the affected dependency, current and target versions, and breaking-change risk. Verify the project builds and unit tests pass after remediation.",
+      "dependencies": [
+        "002-transform-oracle-to-postgresql"
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "deployment",
+      "id": "004-deployment-azure-container-apps",
+      "description": "Build and deploy the Photo Album application to Azure Container Apps.",
+      "reason": "The requested Azure destination for the application is Azure Container Apps.",
+      "requirements": "Containerize the application as needed, publish its image to the provisioned Azure Container Registry, and deploy it to the provisioned Azure Container Apps environment in rg-labuser-0006, swedencentral. Configure the application to connect to the migrated Azure Database for PostgreSQL using secure runtime configuration. Do not deploy to AKS or create a resource group.",
+      "dependencies": [
+        "001-infrastructure-azure-container-apps-postgresql",
+        "002-transform-oracle-to-postgresql",
+        "003-security-cve-remediation"
+      ],
+      "targetAzureService": "azurecontainerapp",
+      "resourceStatus": "Provisioned by task 001 in the existing resource group.",
+      "deploymentTool": "bicep",
+      "skills": [
+        {
+          "name": "azcli-containerapp-deploy",
+          "location": "builtin"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "planName": "cloud-modernization-plan",
+    "projectName": "Photo Album Java",
+    "language": "java",
+    "createdAt": "2026-11-05T14:27:14+01:00",
+    "version": "1.0"
+  }
+}
